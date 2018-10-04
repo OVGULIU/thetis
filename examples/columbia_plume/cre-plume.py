@@ -128,8 +128,9 @@ options.use_turbulence_advection = False  # not simple_barotropic
 options.use_smooth_eddy_viscosity = False
 options.turbulence_model_type = 'gls'
 options.use_baroclinic_formulation = not simple_barotropic
+options.use_lax_friedrichs_velocity = True
+options.use_lax_friedrichs_tracer = False
 options.lax_friedrichs_velocity_scaling_factor = Constant(1.0)
-options.lax_friedrichs_tracer_scaling_factor = Constant(1.0)
 options.vertical_viscosity = Constant(2e-5)
 options.vertical_diffusivity = Constant(2e-5)
 options.horizontal_viscosity = Constant(1.0)
@@ -158,7 +159,7 @@ options.fields_to_export = ['uv_2d', 'elev_2d', 'uv_3d',
                             'eddy_visc_3d', 'shear_freq_3d',
                             'buoy_freq_3d', 'tke_3d', 'psi_3d',
                             'eps_3d', 'len_3d',
-                            'int_pg_3d']
+                            'int_pg_3d', 'baroc_head_3d']
 options.fields_to_export_hdf5 = []
 options.equation_of_state_type = 'full'
 
@@ -176,7 +177,7 @@ viscosity_bnd_2d.assign(viscosity_bnd_2d + options.horizontal_viscosity)
 ExpandFunctionTo3d(viscosity_bnd_2d, viscosity_bnd_3d).solve()
 # File('bnd_visc.pvd').write(viscosity_bnd_2d)
 solver_obj.function_spaces.P1_2d.restore_work_function(viscosity_bnd_2d)
-options.horizontal_viscosity = viscosity_bnd_3d
+# options.horizontal_viscosity = viscosity_bnd_3d
 
 # atm forcing
 wind_stress_3d = Function(solver_obj.function_spaces.P1v, name='wind stress')
@@ -240,13 +241,13 @@ tide_elev_funcs = {'elev': elev_bnd_expr, 'uv': uv_bnd_2d}
 south_elev_funcs = {'elev': elev_bnd_expr}
 open_uv_funcs = {'symm': None}
 bnd_river_salt = {'value': Constant(salt_river)}
-ocean_salt_funcs = {'value': salt_bnd_3d}
+ocean_salt_funcs = {'value': salt_bnd_3d, 'uv': uv_bnd_3d + uv_bnd_dav_3d}
 bnd_river_temp = {'value': river_temp_const}
-ocean_temp_funcs = {'value': temp_bnd_3d}
-ocean_uv_funcs = {'uv': uv_bnd_3d}
+ocean_temp_funcs = {'value': temp_bnd_3d, 'uv': uv_bnd_3d + uv_bnd_dav_3d}
+ocean_uv_funcs = {'uv': uv_bnd_3d + uv_bnd_dav_3d}
 solver_obj.bnd_functions['shallow_water'] = {
     river_bnd_id: river_swe_funcs,
-    south_bnd_id: south_elev_funcs,
+    south_bnd_id: tide_elev_funcs,
     north_bnd_id: tide_elev_funcs,
     west_bnd_id: tide_elev_funcs,
 }
@@ -358,7 +359,6 @@ def split_3d_bnd_velocity():
     extract_uv_bnd.solve()  # uv_bnd_dav_3d -> uv_bnd_2d
     copy_uv_bnd_dav_to_3d.solve()  # uv_bnd_2d -> uv_bnd_dav_3d
     uv_bnd_3d.assign(uv_bnd_3d - uv_bnd_dav_3d)  # rm depth av
-    
 
 
 # add custom exporters
