@@ -252,21 +252,19 @@ river_temp_const = Constant(river_temp_interp(0)[0])
 
 river_swe_funcs = {'flux': river_flux_const}
 ocean_tide_funcs = {'elev': tide_elev_expr_2d, 'uv': uv_bnd_2d + tide_uv_expr_2d}
-south_tide_funcs = {'elev': tide_elev_expr_2d}
-# west_tide_funcs = {'uv': uv_bnd_2d}
+ocean_uv_2d_funcs = {'uv': uv_bnd_2d + tide_uv_expr_2d}
 open_uv_funcs = {'symm': None}
 bnd_river_salt = {'value': Constant(salt_river)}
 uv_bnd_sum_3d = uv_bnd_3d + uv_bnd_dav_3d + tide_uv_expr_3d
 ocean_salt_funcs = {'value': salt_bnd_3d, 'uv': uv_bnd_sum_3d}
 bnd_river_temp = {'value': river_temp_const}
 ocean_temp_funcs = {'value': temp_bnd_3d, 'uv': uv_bnd_sum_3d}
-# ocean_uv_funcs = {'uv': uv_bnd_sum_3d}
 ocean_uv_funcs = {'uv': uv_bnd_sum_3d, 'baroc_head': bnd_baroc_head_expr}
 solver_obj.bnd_functions['shallow_water'] = {
     river_bnd_id: river_swe_funcs,
     south_bnd_id: ocean_tide_funcs,
     north_bnd_id: ocean_tide_funcs,
-    west_bnd_id: ocean_tide_funcs,
+    west_bnd_id: ocean_uv_2d_funcs,
 }
 solver_obj.bnd_functions['momentum'] = {
     river_bnd_id: open_uv_funcs,
