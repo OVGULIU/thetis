@@ -168,7 +168,7 @@ solver_obj.create_function_spaces()
 # additional diffusion at ocean boundary
 viscosity_bnd_2d = solver_obj.function_spaces.P1_2d.get_work_function()
 viscosity_bnd_3d = Function(solver_obj.function_spaces.P1, name='visc_bnd_3d')
-visc_bnd_dist = 30e3
+visc_bnd_dist = 60e3
 visc_bnd_value = 80.0
 get_boundary_relaxation_field(viscosity_bnd_2d,
                               [north_bnd_id, west_bnd_id, south_bnd_id],
@@ -177,7 +177,7 @@ viscosity_bnd_2d.assign(viscosity_bnd_2d + options.horizontal_viscosity)
 ExpandFunctionTo3d(viscosity_bnd_2d, viscosity_bnd_3d).solve()
 # File('bnd_visc.pvd').write(viscosity_bnd_2d)
 solver_obj.function_spaces.P1_2d.restore_work_function(viscosity_bnd_2d)
-# options.horizontal_viscosity = viscosity_bnd_3d
+options.horizontal_viscosity = viscosity_bnd_3d
 
 # atm forcing
 wind_stress_3d = Function(solver_obj.function_spaces.P1v, name='wind stress')
