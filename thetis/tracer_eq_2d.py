@@ -232,8 +232,13 @@ class HorizontalDiffusionTerm(TracerTerm):
             f += -inner(jump(self.test, self.normal),
                         avg(dot(diff_tensor, grad(solution))))*ds_interior
         if self.use_supg:
-            exit(1)
-        # TODO
+            # In the FEniCS example implementation of SUPG, CellSize is the measure of
+            # element size used. In the presence of anisotropic elements, it may be
+            # important to also consider shape and orientation.
+            h = Cellsize(solution.function_space().mesh())
+            uv = fields_old['uv_2d']
+            tau = 0.5 * h / norm(uv)
+            # TODO
 
         return -f
 
