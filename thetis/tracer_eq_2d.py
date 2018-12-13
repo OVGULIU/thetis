@@ -32,7 +32,7 @@ class TracerTerm(Term):
     boundary functions.
     """
     def __init__(self, function_space,
-                 bathymetry=None, use_lax_friedrichs=True):
+                 bathymetry=None, use_lax_friedrichs=True, use_supg=False):
         """
         :arg function_space: :class:`FunctionSpace` where the solution belongs
         :kwarg bathymetry: bathymetry of the domain
@@ -44,6 +44,7 @@ class TracerTerm(Term):
         continuity = element_continuity(self.function_space.ufl_element())
         self.horizontal_dg = continuity.horizontal == 'dg'
         self.use_lax_friedrichs = use_lax_friedrichs
+        self.use_supg = use_supg
 
         # define measures with a reasonable quadrature degree
         p = self.function_space.ufl_element().degree()
@@ -230,6 +231,9 @@ class HorizontalDiffusionTerm(TracerTerm):
                         jump(solution, self.normal))*ds_interior
             f += -inner(jump(self.test, self.normal),
                         avg(dot(diff_tensor, grad(solution))))*ds_interior
+        if self.use_supg:
+            exit(1)
+        # TODO
 
         return -f
 
@@ -260,7 +264,8 @@ class TracerEquation2D(Equation):
     """
     def __init__(self, function_space,
                  bathymetry=None,
-                 use_lax_friedrichs=False):
+                 use_lax_friedrichs=False,
+                 use_supg=False):
         """
         :arg function_space: :class:`FunctionSpace` where the solution belongs
         :kwarg bathymetry: bathymetry of the domain
@@ -271,7 +276,7 @@ class TracerEquation2D(Equation):
         """
         super(TracerEquation2D, self).__init__(function_space)
 
-        args = (function_space, bathymetry, use_lax_friedrichs)
+        args = (function_space, bathymetry, use_lax_friedrichs, use_supg)
         self.add_term(HorizontalAdvectionTerm(*args), 'explicit')
         self.add_term(HorizontalDiffusionTerm(*args), 'explicit')
         self.add_term(SourceTerm(*args), 'source')
