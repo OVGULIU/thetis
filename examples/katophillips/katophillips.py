@@ -76,7 +76,7 @@ options.timestep = dt
 options.simulation_end_time = t_end
 options.output_directory = outputdir
 options.horizontal_velocity_scale = Constant(u_mag)
-options.check_salinity_overshoot = True
+options.check_salinity_overshoot = False
 options.fields_to_export = ['uv_2d', 'elev_2d', 'elev_3d', 'uv_3d',
                             'w_3d', 'w_mesh_3d', 'salt_3d',
                             'baroc_head_3d',
@@ -110,7 +110,23 @@ x, y, z = SpatialCoordinate(solver_obj.mesh)
 salt_init_expr = salt_grad*z
 salt_init3d.interpolate(salt_init_expr)
 
+
+class MaxNuCallback(DiagnosticCallback):
+    """
+    Calculates max viscosity
+    """
+    name = 'maxnu'
+    variable_names = ['nu']
+
+    def __call__(self):
+        return [self.solver_obj.fields.eddy_visc_3d.dat.data.max()]
+
+    def message_str(self, *args):
+        return 'max viscosity: {:12.5f}'.format(*args)
+
+
 if __name__ == '__main__':
+    solver_obj.add_callback(MaxNuCallback(solver_obj))
     solver_obj.assign_initial_conditions(salt=salt_init3d)
 
     solver_obj.iterate()
