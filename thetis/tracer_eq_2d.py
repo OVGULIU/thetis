@@ -218,6 +218,7 @@ class HorizontalDiffusionTerm(TracerTerm):
             # give the approximation cot(Theta)=a.
             # assuming k_max/k_min=2
             # sigma = 400 = 200*p*(p+1)
+            # TODO: Better to use SUPG stabilisation or an LDG approach
 
             degree_h = self.function_space.ufl_element().degree()
             sigma = 5.0*degree_h*(degree_h + 1)/self.cellsize
@@ -232,23 +233,21 @@ class HorizontalDiffusionTerm(TracerTerm):
             f += -inner(jump(self.test, self.normal),
                         avg(dot(diff_tensor, grad(solution))))*ds_interior
         if self.use_supg:
-            # In the FEniCS example implementation of SUPG, CellSize is the measure of
-            # element size used. In the presence of anisotropic elements, it may be
-            # important to also consider shape and orientation.
+            # Here CellSize is the measure of element size used. In the presence of anisotropic
+            # elements, it may be important to also consider shape and orientation.
             uv = fields_old['uv_2d']
-            # vnorm = norm(uv)
-            # tau = 0.5 * self.cellsize / vnorm           # FIXME: Why is the norm zero?
-            tau = 0.5 * self.cellsize / sqrt(60. * 10.)   # TODO: NOT GENERAL
+            vnorm = norm(uv)
+            tau = 0.5 * self.cellsize / vnorm  # FIXME: Why is the norm zero?
 
             # Strong residual
-            r = (solution - solution_old) / 0.1  # TODO: NOT GENERAL
-            r += dot(uv, grad(solution))         # TODO: Do we need to worry about TS?
-            r += div(diff_flux)                  # TODO: Do we need to worry about TS?
+            dt = 0.01  # FIXME: Where to get dt from? This is not known by a term in the equation.
+            r = (solution - solution_old)
+
+            r += dt * (dot(uv, grad(solution)) - div(diff_flux))
+            # TODO: To account for other TS schemes, we should use strong residual, as on error-estimation branch
 
             # Add stabilisation term
             f += tau * inner(uv, grad(self.test)) * r * dx
-
-            # TODO: Test this
 
         return -f
 
