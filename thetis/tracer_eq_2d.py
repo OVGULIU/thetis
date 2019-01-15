@@ -240,11 +240,8 @@ class HorizontalDiffusionTerm(TracerTerm):
             tau = 0.5 * self.cellsize / vnorm  # FIXME: Why is the norm zero?
 
             # Strong residual
-            dt = 0.01  # FIXME: Where to get dt from? This is not known by a term in the equation.
-            r = (solution - solution_old)
-
-            r += dt * (dot(uv, grad(solution)) - div(diff_flux))
-            # TODO: To account for other TS schemes, we should use strong residual, as on error-estimation branch
+            r = dot(uv, grad(solution)) - div(diff_flux)
+            # TODO: Account for TS part, too
 
             # Add stabilisation term
             f += tau * inner(uv, grad(self.test)) * r * dx
